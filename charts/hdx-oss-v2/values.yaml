@@ -7,14 +7,14 @@ global:
   #   - name: regcred
   #   - name: docker-hub-secret
   imagePullSecrets: []
-  storageClassName: "local-path"
+  storageClassName: "gp3"
   # Keep PVCs when uninstalling helm release to preserve data
   keepPVC: false
 
 hyperdx:
   image:
     repository: docker.hyperdx.io/hyperdx/hyperdx
-    tag:
+    tag: 
     pullPolicy: IfNotPresent
   livenessProbe:
     enabled: true
@@ -39,29 +39,31 @@ hyperdx:
     #   operator: "Equal"
     #   value: "value1"
     #   effect: "NoSchedule"
-  apiKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  apiKey: "10dd0541-4631-4b41-981d-2fdff1f68ee5"
   apiPort: 8000
   appPort: 3000
   opampPort: 4320
-  # deprecated: use frontendUrl instead
-  appUrl: "http://localhost"
   # The URL that will be use to access the frontend. Defaults to the http://localhost:3000.
   # If you have an ingress enabled, you should set this to the ingress host with the protocol. E.g. https://hdx-my-domain.com
-  frontendUrl: "{{ .Values.hyperdx.appUrl }}:{{ .Values.hyperdx.appPort }}"
-  logLevel: "info"
-  usageStatsEnabled: true
+  frontendUrl: "https://dev-hyperdx.k8s.shoplive.cloud"
+  # frontendUrl: "{{ .Values.hyperdx.appUrl }}:{{ .Values.hyperdx.appPort }}"
+  logLevel: "debug"
+  usageStatsEnabled: false
   # Endpoint to send hyperdx logs/traces/metrics to.Defaults to the chart's otel collector endpoint.
   otelExporterEndpoint: http://{{ include "hdx-oss.fullname" . }}-otel-collector:{{ .Values.otel.httpPort }}
-  mongoUri: mongodb://{{ include "hdx-oss.fullname" . }}-mongodb:{{ .Values.mongodb.port }}/hyperdx
-
-  # Pod-level annotations (applied to the deployment pods)
+  mongoUri: mongodb://neo:trinity34%23%24@dev-shoplive-shortform-cluster.cluster-chugiecaksxb.ap-northeast-2.docdb.amazonaws.com:27017/hyperdx?retryWrites=false&authMechanism=SCRAM-SHA-1
+  # mongoUri: mongodb://{{ include "hdx-oss.fullname" . }}-mongodb:{{ .Values.mongodb.port }}/hyperdx
   annotations: {}
     # myAnnotation: "myValue"
 
   # Pod-level labels (applied to the deployment pods)
   labels: {}
     # myLabel: "myValue"
-  env: []
+  env:
+    - name: NEXTAUTH_URL
+      value: "https://dev-hyperdx.k8s.shoplive.cloud"
+    - name: USAGE_STATS_ENABLED
+      value: "false"
     # Additional environment variables can be configured here
     # This is preserved for backward compatibility and advanced use cases
 
@@ -77,17 +79,17 @@ hyperdx:
   # The secret should contain separate keys for connections and sources JSON arrays
   useExistingConfigSecret: false
   existingConfigSecret: ""
-  existingConfigConnectionsKey: "connections.json"
-  existingConfigSourcesKey: "sources.json"
+  existingConfigConnectionsKey: ""
+  existingConfigSourcesKey: ""
   
   defaultConnections: |
     [
       {
-        "name": "Local ClickHouse",
-        "host": "http://{{ include "hdx-oss.fullname" . }}-clickhouse:8123",
-        "port": 8123,
-        "username": "app",
-        "password": "{{ .Values.clickhouse.config.users.appUserPassword }}"
+        "name": "ClickHouse Cloud",
+        "host": "https://fw9e14z6df.us-east-2.aws.clickhouse.cloud:8443",
+        "port": 8443,
+        "username": "backendDeveloper",
+        "password": "Trinity345#$%"
       }
     ]
 
@@ -96,7 +98,7 @@ hyperdx:
     [
       {
         "from": {
-          "databaseName": "default",
+          "databaseName": "otel_dev",
           "tableName": "otel_logs"
         },
         "kind": "log",
@@ -119,7 +121,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "default",
+          "databaseName": "otel_dev",
           "tableName": "otel_traces"
         },
         "kind": "trace",
@@ -148,7 +150,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "default",
+          "databaseName": "otel_dev",
           "tableName": ""
         },
         "kind": "metric",
@@ -169,7 +171,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "default",
+          "databaseName": "otel_dev",
           "tableName": "hyperdx_sessions"
         },
         "kind": "session",
@@ -244,9 +246,9 @@ hyperdx:
       # cloud.google.com/load-balancer-type: "Internal"
 
 mongodb:
+  enabled: false
   image: "mongo:5.0.14-focal"
   port: 27017
-  enabled: true
   # Add nodeSelector and tolerations for mongodb service
   nodeSelector: {}
     # Example:
@@ -259,7 +261,7 @@ mongodb:
     #   value: "value1"
     #   effect: "NoSchedule"
   persistence:
-    enabled: true
+    enabled: false
     dataSize: 10Gi
   livenessProbe:
     enabled: true
@@ -275,6 +277,7 @@ mongodb:
     failureThreshold: 3
 
 clickhouse:
+  enabled: false
   image: "clickhouse/clickhouse-server:24-alpine"
   port: 8123
   nativePort: 9000
@@ -290,7 +293,6 @@ clickhouse:
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
-  enabled: true
   # Add nodeSelector and tolerations for clickhouse service
   nodeSelector: {}
     # Example:
@@ -335,19 +337,19 @@ clickhouse:
       - "192.168.0.0/16"    # OrbStack, Minikube, and local development
 
 otel:
+  enabled: true
   image:
     repository: docker.hyperdx.io/hyperdx/hyperdx-otel-collector
     tag:
     pullPolicy: IfNotPresent
   replicas: 1
-  resources: {}
-    # Example:
-    # requests:
-    #   memory: "127Mi"
-    #   cpu: "100m"
-    # limits:
-    #   memory: "256Mi"
-    #   cpu: "200m"
+  resources:
+    requests:
+      memory: "127Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
   # Pod-level annotations (applied to the deployment pods)
   annotations: {}
     # myAnnotation: "myValue"
@@ -367,8 +369,160 @@ otel:
   grpcPort: 4317
   httpPort: 4318
   healthPort: 8888
-  enabled: true
-  env: []
+  customConfig: |
+    receivers:
+      otlp/hyperdx:
+        protocols:
+          grpc:
+            include_metadata: true
+            endpoint: '0.0.0.0:4317'
+          http:
+            cors:
+              allowed_origins: ['*']
+              allowed_headers: ['*']
+            include_metadata: true
+            endpoint: '0.0.0.0:4318'
+    processors:
+      transform:
+        log_statements:
+          - context: log
+            error_mode: ignore
+            statements:
+              # JSON parsing: Extends log attributes with the fields from structured log body content, either as an OTEL map or
+              # as a string containing JSON content.
+              - set(log.cache, ExtractPatterns(log.body, "(?P<0>(\\{.*\\}))")) where
+                IsString(log.body)
+              - merge_maps(log.attributes, ParseJSON(log.cache["0"]), "upsert")
+                where IsMap(log.cache)
+              - flatten(log.attributes) where IsMap(log.cache)
+              - merge_maps(log.attributes, log.body, "upsert") where IsMap(log.body)
+          - context: log
+            error_mode: ignore
+            conditions:
+              - severity_number == 0 and severity_text == ""
+            statements:
+              # Infer: extract the first log level keyword from the first 256 characters of the body
+              - set(log.cache["substr"], log.body.string) where Len(log.body.string)
+                < 256
+              - set(log.cache["substr"], Substring(log.body.string, 0, 256)) where
+                Len(log.body.string) >= 256
+              - set(log.cache, ExtractPatterns(log.cache["substr"],
+                "(?i)(?P<0>(alert|crit|emerg|fatal|error|err|warn|notice|debug|dbug|trace))"))
+              # Infer: detect FATAL
+              - set(log.severity_number, SEVERITY_NUMBER_FATAL) where
+                IsMatch(log.cache["0"], "(?i)(alert|crit|emerg|fatal)")
+              - set(log.severity_text, "fatal") where log.severity_number ==
+                SEVERITY_NUMBER_FATAL
+              # Infer: detect ERROR
+              - set(log.severity_number, SEVERITY_NUMBER_ERROR) where
+                IsMatch(log.cache["0"], "(?i)(error|err)")
+              - set(log.severity_text, "error") where log.severity_number ==
+                SEVERITY_NUMBER_ERROR
+              # Infer: detect WARN
+              - set(log.severity_number, SEVERITY_NUMBER_WARN) where
+                IsMatch(log.cache["0"], "(?i)(warn|notice)")
+              - set(log.severity_text, "warn") where log.severity_number ==
+                SEVERITY_NUMBER_WARN
+              # Infer: detect DEBUG
+              - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where
+                IsMatch(log.cache["0"], "(?i)(debug|dbug)")
+              - set(log.severity_text, "debug") where log.severity_number ==
+                SEVERITY_NUMBER_DEBUG
+              # Infer: detect TRACE
+              - set(log.severity_number, SEVERITY_NUMBER_TRACE) where
+                IsMatch(log.cache["0"], "(?i)(trace)")
+              - set(log.severity_text, "trace") where log.severity_number ==
+                SEVERITY_NUMBER_TRACE
+              # Infer: else
+              - set(log.severity_text, "info") where log.severity_number == 0
+              - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number == 0
+          - context: log
+            error_mode: ignore
+            statements:
+              # Normalize the severity_text case
+              - set(log.severity_text, ConvertCase(log.severity_text, "lower"))
+      resourcedetection:
+        detectors:
+          - env
+          - system
+          - docker
+        timeout: 5s
+        override: false
+      batch:
+      memory_limiter:
+        # 80% of maximum memory up to 2G, adjust for low memory environments
+        limit_mib: 1500
+        # 25% of limit up to 2G, adjust for low memory environments
+        spike_limit_mib: 512
+        check_interval: 5s
+    connectors:
+      routing/logs:
+        default_pipelines: [logs/out-default]
+        error_mode: ignore
+        table:
+          - context: log
+            statement: route() where IsMatch(attributes["rr-web.event"], ".*")
+            pipelines: [logs/out-rrweb]
+    exporters:
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+      clickhouse/rrweb:
+        database: ${env:HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE}
+        endpoint: ${env:CLICKHOUSE_ENDPOINT}
+        password: ${env:CLICKHOUSE_PASSWORD}
+        username: ${env:CLICKHOUSE_USER}
+        create_schema: false
+        ttl: 720h
+        logs_table_name: hyperdx_sessions
+        timeout: 5s
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+      clickhouse:
+        database: ${env:CLICKHOUSE_DATABASE}
+        endpoint: ${env:CLICKHOUSE_ENDPOINT}
+        password: ${env:CLICKHOUSE_PASSWORD}
+        username: ${env:CLICKHOUSE_USER}
+        create_schema: false
+        ttl: 720h
+        timeout: 5s
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    extensions:
+      health_check:
+        endpoint: :13133
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp/hyperdx]
+          processors: [memory_limiter, batch]
+          exporters: [clickhouse]
+        metrics:
+          receivers: [otlp/hyperdx]
+          processors: [memory_limiter, batch]
+          exporters: [clickhouse]
+        logs/in:
+          receivers: [otlp/hyperdx]
+          exporters: [routing/logs]
+        logs/out-default:
+          receivers: [routing/logs]
+          processors: [memory_limiter, transform, batch]
+          exporters: [clickhouse]
+        logs/out-rrweb:
+          receivers: [routing/logs]
+          processors: [memory_limiter, batch]
+          exporters: [clickhouse/rrweb]
+
+  env:
+    - name: OTEL_LOG_LEVEL
+      value: "debug"
     # Additional environment variables can be configured here
     # Example:
     # - name: CUSTOM_VAR
@@ -378,26 +532,6 @@ otel:
     #     secretKeyRef:
     #       name: my-secret
     #       key: secret-key
-  # Custom OTEL Collector config - allows you to provide your own OTEL Collector configuration
-  # Provide your OTEL Collector configuration as a multi-line string
-  # This will be mounted as /etc/otelcol-contrib/custom.config.yaml and
-  # the CUSTOM_OTELCOL_CONFIG_FILE environment variable will point to it
-  # Example:
-  # customConfig: |
-  #   receivers:
-  #     hostmetrics:
-  #       collection_interval: 5s
-  #       scrapers:
-  #         cpu:
-  #         load:
-  #         memory:
-  #   service:
-  #     pipelines:
-  #       metrics/hostmetrics:
-  #         receivers: [hostmetrics]
-  #         processors: [memory_limiter, batch]
-  #         exporters: [clickhouse]
-  customConfig:
   # Opamp server URL - defaults to the app service. Customize if you want to use a different Opamp server.
   # Leave empty if you want to use the app service.
   # Example: opampServerUrl: "http://custom-opamp-server:4320"
@@ -405,15 +539,15 @@ otel:
   # Clickhouse endpoint - defaults to chart's Clickhouse service. Customize if you want to use a different Clickhouse service.
   # Leave empty if you want to use the chart's Clickhouse service.
   # Example: clickhouseEndpoint: "tcp://custom-clickhouse-service:9000"
-  clickhouseEndpoint:
-  clickhouseUser:
-  clickhousePassword:
+  clickhouseEndpoint: https://fw9e14z6df.us-east-2.aws.clickhouse.cloud:8443
+  clickhouseUser: "backendDeveloper"
+  clickhousePassword: "Trinity345#$%"
   # Clickhouse Prometheus endpoint - defaults to chart's Clickhouse prometheus service. Customize if you want to use a different Clickhouse prometheus service.
   # Leave empty if prometheus is disabled.
   # Example: clickhousePrometheusEndpoint: "http://custom-clickhouse-service:9363"
-  clickhousePrometheusEndpoint:
+  clickhousePrometheusEndpoint: ""
   # Clickhouse database to send logs/traces/metrics to. Defaults to "default"
-  clickhouseDatabase: "default"
+  clickhouseDatabase: "otel_dev"
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -438,3 +572,4 @@ tasks:
       requests:
         cpu: 100m
         memory: 128Mi
+
