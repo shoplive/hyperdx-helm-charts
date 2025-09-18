@@ -47,7 +47,7 @@ hyperdx:
   # If you have an ingress enabled, you should set this to the ingress host with the protocol. E.g. https://hdx-my-domain.com
   frontendUrl: "https://dev-hyperdx.k8s.shoplive.cloud"
   # frontendUrl: "{{ .Values.hyperdx.appUrl }}:{{ .Values.hyperdx.appPort }}"
-  logLevel: "debug"
+  logLevel: "info"
   usageStatsEnabled: false
   # Endpoint to send hyperdx logs/traces/metrics to.Defaults to the chart's otel collector endpoint.
   otelExporterEndpoint: http://{{ include "hdx-oss.fullname" . }}-otel-collector:{{ .Values.otel.httpPort }}
@@ -345,11 +345,11 @@ otel:
   replicas: 1
   resources:
     requests:
-      memory: "127Mi"
-      cpu: "100m"
+      memory: "1024Mi"
+      cpu: "1000m"
     limits:
-      memory: "256Mi"
-      cpu: "200m"
+      memory: "1.5Gi"
+      cpu: "2000m"
   # Pod-level annotations (applied to the deployment pods)
   annotations: {}
     # myAnnotation: "myValue"
@@ -451,9 +451,9 @@ otel:
       batch:
       memory_limiter:
         # 80% of maximum memory up to 2G, adjust for low memory environments
-        limit_mib: 1500
+        limit_mib: 512
         # 25% of limit up to 2G, adjust for low memory environments
-        spike_limit_mib: 512
+        spike_limit_mib: 256
         check_interval: 5s
     connectors:
       routing/logs:
@@ -483,7 +483,7 @@ otel:
           max_interval: 30s
           max_elapsed_time: 300s
       clickhouse:
-        database: ${env:CLICKHOUSE_DATABASE}
+        database: ${env:HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE}
         endpoint: ${env:CLICKHOUSE_ENDPOINT}
         password: ${env:CLICKHOUSE_PASSWORD}
         username: ${env:CLICKHOUSE_USER}
@@ -522,7 +522,7 @@ otel:
 
   env:
     - name: OTEL_LOG_LEVEL
-      value: "debug"
+      value: "info"
     # Additional environment variables can be configured here
     # Example:
     # - name: CUSTOM_VAR
@@ -568,8 +568,8 @@ tasks:
     resources:
       limits:
         cpu: 200m
-        memory: 256Mi
+        memory: 512Mi
       requests:
         cpu: 100m
-        memory: 128Mi
+        memory: 256Mi
 
