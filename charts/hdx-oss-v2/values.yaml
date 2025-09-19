@@ -345,10 +345,10 @@ otel:
   replicas: 1
   resources:
     requests:
-      memory: "1024Mi"
+      memory: "256Mi"
       cpu: "1000m"
     limits:
-      memory: "1.5Gi"
+      memory: "512Mi"
       cpu: "2000m"
   # Pod-level annotations (applied to the deployment pods)
   annotations: {}
@@ -449,12 +449,15 @@ otel:
         timeout: 5s
         override: false
       batch:
+        send_batch_size: 512
+        send_batch_max_size: 1024
+        timeout: 5s
       memory_limiter:
         # 80% of maximum memory up to 2G, adjust for low memory environments
-        limit_mib: 512
+        limit_mib: 1100
         # 25% of limit up to 2G, adjust for low memory environments
-        spike_limit_mib: 256
-        check_interval: 5s
+        spike_limit_mib: 200
+        check_interval: 2s
     connectors:
       routing/logs:
         default_pipelines: [logs/out-default]
