@@ -39,19 +39,19 @@ hyperdx:
     #   operator: "Equal"
     #   value: "value1"
     #   effect: "NoSchedule"
-  apiKey: "10dd0541-4631-4b41-981d-2fdff1f68ee5"
+  apiKey: "803b06d2-e875-407c-a652-abce411de0f7"
   apiPort: 8000
   appPort: 3000
   opampPort: 4320
   # The URL that will be use to access the frontend. Defaults to the http://localhost:3000.
   # If you have an ingress enabled, you should set this to the ingress host with the protocol. E.g. https://hdx-my-domain.com
-  frontendUrl: "https://dev-hyperdx.k8s.shoplive.cloud"
+  frontendUrl: "https://qa-us-hyperdx.k8s.shoplive.cloud"
   # frontendUrl: "{{ .Values.hyperdx.appUrl }}:{{ .Values.hyperdx.appPort }}"
   logLevel: "info"
   usageStatsEnabled: false
   # Endpoint to send hyperdx logs/traces/metrics to.Defaults to the chart's otel collector endpoint.
   otelExporterEndpoint: http://{{ include "hdx-oss.fullname" . }}-otel-collector:{{ .Values.otel.httpPort }}
-  mongoUri: mongodb://neo:trinity34%23%24@dev-shoplive-shortform-cluster.cluster-chugiecaksxb.ap-northeast-2.docdb.amazonaws.com:27017/hyperdx?retryWrites=false&authMechanism=SCRAM-SHA-1
+  mongoUri: mongodb://neo:trinity34%23%24@dev-shoplive-shortform-cluster.cluster-chugiecaksxb.ap-northeast-2.docdb.amazonaws.com:27017/qa-us-hyperdx?retryWrites=false&authMechanism=SCRAM-SHA-1
   # mongoUri: mongodb://{{ include "hdx-oss.fullname" . }}-mongodb:{{ .Values.mongodb.port }}/hyperdx
   annotations: {}
     # myAnnotation: "myValue"
@@ -61,7 +61,7 @@ hyperdx:
     # myLabel: "myValue"
   env:
     - name: NEXTAUTH_URL
-      value: "https://dev-hyperdx.k8s.shoplive.cloud"
+      value: "https://qa-us-hyperdx.k8s.shoplive.cloud"
     - name: USAGE_STATS_ENABLED
       value: "false"
     # Additional environment variables can be configured here
@@ -98,7 +98,7 @@ hyperdx:
     [
       {
         "from": {
-          "databaseName": "otel_dev",
+          "databaseName": "otel_qa_us",
           "tableName": "otel_logs"
         },
         "kind": "log",
@@ -121,7 +121,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "otel_dev",
+          "databaseName": "otel_qa_us",
           "tableName": "otel_traces"
         },
         "kind": "trace",
@@ -150,7 +150,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "otel_dev",
+          "databaseName": "otel_qa_us",
           "tableName": ""
         },
         "kind": "metric",
@@ -171,7 +171,7 @@ hyperdx:
       },
       {
         "from": {
-          "databaseName": "otel_dev",
+          "databaseName": "otel_qa_us",
           "tableName": "hyperdx_sessions"
         },
         "kind": "session",
@@ -550,7 +550,7 @@ otel:
   # Example: clickhousePrometheusEndpoint: "http://custom-clickhouse-service:9363"
   clickhousePrometheusEndpoint: ""
   # Clickhouse database to send logs/traces/metrics to. Defaults to "default"
-  clickhouseDatabase: "otel_dev"
+  clickhouseDatabase: "otel_qa_us"
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
